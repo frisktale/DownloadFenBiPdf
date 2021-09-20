@@ -36,8 +36,11 @@ namespace DownloadFenBiPDF
             }
 
         }
-        static readonly string cookie = "sid=-259474955386604970; persistent=o/YRwZKRcwvNKpuKT1Nmv4vQeLARdomaDu1fJpD4YDwBlW84cw4vy1rLVoBCLzGtIHhCJePwWK749OF/GACiGw==; userid=60759081; sess=wan9KUQGRQ7ijJ/B7S7KT5ngwCZAfpABZgv6iPmyL1dIcg1lWtXeCeI7aReo6Nf6TEXXtl+zXIP1Q1oJTizudgJlzyQ9yzmZziY/DKm5nsc=";
-
+        /// <summary>
+        /// 获取一个智能组卷的id
+        /// </summary>
+        /// <param name="client">复用httpclient</param>
+        /// <returns>智能组卷id</returns>
         private static async Task<string> GetPageIdAsync(HttpClient client)
         {
             var request = new HttpRequestMessage
@@ -64,9 +67,17 @@ namespace DownloadFenBiPDF
 
         }
 
+        /// <summary>
+        /// 下载pdf到程序根目录
+        /// </summary>
+        /// <param name="client">复用httpclient</param>
+        /// <param name="id">智能组卷的id</param>
+        /// <param name="fileCount">当前循环次数，用于给下载的pdf编号</param>
+        /// <returns></returns>
         private static async Task DownloadPDFAsync(HttpClient client,string id,int fileCount)
         {
             string downloadUrl = $"https://urlimg.fenbi.com/api/pdf/tiku/sydw/exercise/{id}?app=web&kav=12&version=3.0.0.0";
+            //因为是pdf文件，所以不能用GetStream而应该用GetByte
             var bytes = (await client.GetByteArrayAsync(downloadUrl));
             var fileName = $"试卷{DateTime.Now:MM-dd}-{fileCount}.pdf";
             var file = new FileInfo(fileName);
@@ -76,6 +87,7 @@ namespace DownloadFenBiPDF
             }
             using var stream = file.Open(FileMode.Create);
             //using var stream = new FileStream(fileName, FileMode.Create);
+            //写入内存中的byte[]建议用这种方法，byte[]直接转成ReadOnlyMemory<byte>
             await stream.WriteAsync(bytes);
         }
     }
