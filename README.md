@@ -12,11 +12,11 @@
   1. 切换到“网络”tab页
   1. 进入 [粉笔网](https://www.fenbi.com/page/home) （没登陆的先登录）
   1. 随便找一条网络请求，点开，找到Cookie项，右键，赋值值，粘贴到配置文件中。
-  ![](img\cookie.png)  
+  ![获取Cookie图示](img/cookie.png)  
   
   在 `DownloadCount`节点下设置一共要下载的pdf个数  
 
   最终配置文件内容如图：  
-  ![](img\config.png)
+  ![整体配置](img/config.png)
 ### 2. 运行程序  
 即可在程序所在目录下看到下载好的pdf文件
