@@ -19,15 +19,29 @@ namespace DownloadFenBiPDF
             var configurationBuilder = new ConfigurationBuilder();
             configurationBuilder.AddJsonFile("application.json");
 
+#if DEBUG
             Assembly assembly = typeof(Program).Assembly;
             if (assembly != null)
                 configurationBuilder.AddUserSecrets(assembly, true);
-
+#endif
             var conf = configurationBuilder.Build();
-            var cookie = conf.GetSection("FenBiCookie").Value;
-            var count = int.Parse(conf.GetSection("DownloadCount").Value);
+            var cookie = conf["FenBiCookie"];
+            if (string.IsNullOrEmpty(cookie))
+            {
+                throw new Exception("cookie不可为空");
+            }
+            var success = int.TryParse(conf["DownloadCount"],out var count);
+            if (!success)
+            {
+                throw new Exception("count不正确");
+            }
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Cookie", cookie);
+
+            if (!await CheckCookieAsync(client))
+            {
+                throw new Exception("cookie无效");
+            }
 
             var taskList = new List<Task>();
 
@@ -37,6 +51,10 @@ namespace DownloadFenBiPDF
             }
 
             await Task.WhenAll(taskList);
+
+            Console.WriteLine("按任何键退出");
+            Console.ReadKey();
+
         }
 
         private static async Task DownloadRandomPDF(HttpClient client, int count)
@@ -60,6 +78,8 @@ namespace DownloadFenBiPDF
 
             var response = await client.PostAsync("https://tiku.fenbi.com/api/sydw/exercises?app=web&kav=12&version=3.0.0.0",content);
             var result = await response.Content.ReadAsStringAsync();
+
+
 
             using JsonDocument jsonDocument = JsonDocument.Parse(result);
             var id = jsonDocument.RootElement.GetProperty("id");
@@ -85,6 +105,14 @@ namespace DownloadFenBiPDF
             using var stream = new FileStream(fileName, FileMode.Create);
             //写入内存中的byte[]建议用这种方法，byte[]直接转成ReadOnlyMemory<byte>
             await stream.WriteAsync(bytes);
+        }
+
+        private static async Task<bool> CheckCookieAsync(HttpClient client)
+        {
+
+            var response = await client.GetAsync(@"https://tiku.fenbi.com/api/users/info?app=web&kav=12&version=3.0.0.0");
+            return response.StatusCode==HttpStatusCode.OK;
+
         }
     }
 }
